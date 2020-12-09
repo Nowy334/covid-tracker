@@ -37,7 +37,7 @@ export default {
     url(){
       if(this.getCode){
        // return `https://www.countryflags.io/${this.getCode}/shiny/64.png`;
-        return `http://www.geonames.org/flags/x/${this.getCode}.gif`;
+        return `https://www.geonames.org/flags/x/${this.getCode}.gif`;
       }
     },
     currentData(){
