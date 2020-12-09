@@ -1,41 +1,34 @@
-const country = "https://api.covid19api.com/countries";
-const API = "https://api.covid19api.com/summary";
+import { createStore } from 'vuex';
+import Search from './modules/search.js';
+import Summary from './modules/summary.js';
+import Code from './modules/code.js';
+import Chart from './modules/chart.js';
 
-
-function findCountry(data, input){
-  for( let i = 0; i < data.length; i++){
-    if(input === data[i]){
-      return(data[i]);
-    }
+const store = createStore({
+  modules: {
+    search: Search,
+    summary: Summary,
+    code: Code,
+    chart: Chart
+  },
+  state() {
+    return {
+      
+    };
+  },
+  mutations: {
+  
+  },
+  getters: {
+    
+  },
+  actions: {
+    
   }
-}
+});
 
-export async function summary(){
-  try{
-    const response = await fetch(API);
-    const data = await response.json();
-    console.log(data.Global);
-    return data;
-  }catch(error){
-    console.log(error);
-  }
-}
+export default store;
 
-function findCode(data, input){
-  for( let i = 0; i < data.length; i++){
-    if(input === data[i].Slug){
-      return(data[i].ISO2);
-    }
-  }
-}    
 
-export async function counterCode(input){
-  try{
-    const response = await fetch(country);
-    const data = await response.json();
-    const code = findCode(data, input);
-    return code;
-  }catch(error){
-    console.log(error);
-  }
-}
+
+

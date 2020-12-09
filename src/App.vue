@@ -1,99 +1,75 @@
 <template>
   <div class="main">
-    <Search v-model="searchValue" @update:modelValue="handleInput"/>
-    <HeaderCountry :flag="code" :country="searchValue"></HeaderCountry>
-    <Summary :land="Country" :search="searchValue"></Summary>
+    <Search @update="handleInput"/>
+    <HeaderCountry></HeaderCountry>
+    <Summary></Summary>
   </div>
+  <transition name="chart">
+    <LineChart :value="getSearchValue" class="chart" v-if="getSearchValue"></LineChart>
+  </transition>
 </template>
 
 <script>
-import debounce from 'lodash.debounce';
-import {counterCode} from "./store/index.js";
+import VueApexCharts from "vue3-apexcharts";
 import Search from './components/Search.vue'    
 import Summary from './components/Summary.vue'
+import LineChart from './components/LineChart.vue'
 import HeaderCountry from './components/HeaderCountry.vue'
-
 
 export default {
   name: 'App',
   components: {
     Search,
     Summary,
-    HeaderCountry
-  },
-  data() {
-    return {
-      searchValue: '',
-      code: '',
-      data: {},
-      Country: {
-        TotalConfirmed: '',
-        NewConfirmed: '',
-        TotalDeaths: '',
-        NewDeaths: '',
-        TotalRecovered: '',
-        NewRecovered: ''
-      }
-    }
+    HeaderCountry,
+    LineChart
   },
   methods: {
-    async handleInput(){
-        this.code = await counterCode(this.searchValue);
-        this.getCountry();
+    setCountries(){
+      this.$store.dispatch({type:'search/saveCountries'});
     },
-    search(data){
-      for( let i = 0; i < data.length; i++){
-        //console.log(this.searchValue);
-        if(this.searchValue === data[i].Slug){
-          return(data[i]);
-        }   
-      }
+   async setCode(){
+      await this.$store.dispatch({
+        type:'code/counterCode',
+        value: this.getSearchValue
+      });
+    },
+    setChart(){
+      this.$store.dispatch({type:'chart/setChart'});
     },
 
-    async getCountry(){
-      try{
-        const response = await fetch("https://api.covid19api.com/summary");
-        const data = await response.json();
-        this.Country.TotalConfirmed =this.search(data.Countries).TotalConfirmed.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-        this.Country.NewConfirmed =this.search(data.Countries).NewConfirmed.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-        this.Country.TotalDeaths =this.search(data.Countries).TotalDeaths.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-        this.Country.NewDeaths =this.search(data.Countries).NewDeaths.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-        this.Country.TotalRecovered =this.search(data.Countries).TotalRecovered.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-        this.Country.NewRecovered =this.search(data.Countries).NewRecovered.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-      }catch(error){
-         //console.log(error);
-         this.begin();
-      } 
+    setCountry(){
+      this.$store.dispatch({
+        type:'summary/setCountry',
+        value: this.getSearchValue
+      });
     },
-    async begin(){
-      try{
-      const response = await fetch("https://api.covid19api.com/summary");
-      const data = await response.json();
-        this.Country.TotalConfirmed = data.Global.TotalConfirmed.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-        this.Country.NewConfirmed = data.Global.NewConfirmed.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-        this.Country.TotalDeaths = data.Global.TotalDeaths.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-        this.Country.NewDeaths = data.Global.NewDeaths.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-        this.Country.TotalRecovered = data.Global.TotalRecovered.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-        this.Country.NewRecovered = data.Global.NewRecovered.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-      }catch(error){
-        //console.log(error);
-      }
-    }
+    setGlobalData(){
+      this.$store.dispatch({type : 'summary/setGlobalData'});
+    },
+     async handleInput(){
+        if(this.getSearchValue){
+          await this.setCode();
+          //console.log("tam" + this.getCode);
+          this.setCountry();
+          this.setChart();
+        }else{
+          this.setGlobalData();
+        }
+    },
   },
   async mounted(){
-    try{
-      const response = await fetch("https://api.covid19api.com/summary");
-      const data = await response.json();
-        this.Country.TotalConfirmed = data.Global.TotalConfirmed.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-        this.Country.NewConfirmed = data.Global.NewConfirmed.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-        this.Country.TotalDeaths = data.Global.TotalDeaths.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-        this.Country.NewDeaths = data.Global.NewDeaths.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-        this.Country.TotalRecovered = data.Global.TotalRecovered.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-        this.Country.NewRecovered = data.Global.NewRecovered.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-    }catch(error){
-      console.log(error);
-    }
+    await this.setGlobalData();
+    await this.setCountries()
   },
+  computed: {
+    getSearchValue(){
+      return this.$store.getters['search/searchValue'];
+    },
+    getCode(){
+      return this.$store.getters['code/getCode'];
+    }
+  }
 }
 </script>
 
@@ -107,13 +83,55 @@ export default {
  }
   body {
     background-color: #F2F2F2;
-   font-family: 'Lato', sans-serif;
+    font-family: 'Lato', sans-serif;
   }
-
+  #app{
+    display: flex;
+    //justify-content: center;
+    align-items: center;
+    flex-direction: column;
+  }
   .main {
     display: flex;
     flex-direction: column;
     align-items: center;
   }
+  .chart {
+    //display: flex;
+    //flex-direction: column;
+    //align-items: center;
+    background-color: #fff;
+    border-radius:15px;
+    width:870px;
+    min-height: 400px;
+    padding: 30px;
+    margin: 15px auto 15px auto;
+    box-shadow: 0px 0px 3px 0px rgba(0,0,0,0.20);
+
+    @media only screen and (max-width: 840px){
+      margin-top:150px;
+      width:500px;
+    }
+
+    @media only screen and (max-width: 500px){
+      width:360px;
+      padding: 0;
+    }
+
+     
+  }
+  .chart-enter-from,
+  .chart-leave-to{
+    opacity: 0;
+  }
+  .chart-enter-active,
+  .chart-leave-active{
+    transition: all 0.1s ease-in-out;
+  }
+  .chart-enter-to,
+  .chart-leave-from{
+    opacity: 1;
+  }
+
 
 </style>
