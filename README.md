@@ -1,5 +1,8 @@
 # covid-tracker
 
+## Link to the page
+https://nowy334.github.io/covid-tracker/
+
 ## Project setup
 ```
 npm install
